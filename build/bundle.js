@@ -1034,6 +1034,7 @@ module.exports = warning;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+
 /* Enumerations and Utility methods for common functionality and configuration */
 
 var KEYS_Sort = exports.KEYS_Sort = {
@@ -1078,6 +1079,17 @@ var objComparer = exports.objComparer = function objComparer(key) {
         return function (a, b) {
             return sortOrder === KEYS_Ord.asc ? a[key] < b[key] : a[key] > b[key];
         };
+    };
+};
+
+// add delay to Promise
+var fakeDelay = exports.fakeDelay = function fakeDelay(milliseconds) {
+    return function (param) {
+        return new Promise(function (resolve) {
+            return setTimeout(function () {
+                return resolve(param);
+            }, milliseconds);
+        });
     };
 };
 
@@ -18832,15 +18844,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } // for unique ids
 
-// simulation
 
-var preload = { // assign unique identifiers to the json array 
-    data: _dataApi2.default.data.map(function (personElem) {
-        return Object.assign({}, personElem, { id: name + '-' + (0, _v2.default)() });
-    })
-};
+// json data
 
 var App = function (_React$Component) {
     _inherits(App, _React$Component);
@@ -18851,8 +18858,9 @@ var App = function (_React$Component) {
         var _this = _possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this, args));
 
         _this.state = {
-            apiData: JSON.parse(JSON.stringify(preload)), // deep copy to avoid reference
-            displayData: JSON.parse(JSON.stringify(preload)), //deep copy
+            loaded: false,
+            apiData: {},
+            displayData: {},
             lastSort: _constants.KEYS_Sort.default,
             lastOrder: _constants.KEYS_Ord.asc
         };
@@ -18862,6 +18870,25 @@ var App = function (_React$Component) {
     }
 
     _createClass(App, [{
+        key: 'componentDidMount',
+        value: function componentDidMount() {
+            var _this2 = this;
+
+            //simulate api call
+            _dataApi2.default.then((0, _constants.fakeDelay)(1000)).then(function (response) {
+                var preload = { // assign unique keys to the json array 
+                    data: response.data.map(function (personElem) {
+                        return Object.assign({}, personElem, { id: name + '-' + (0, _v2.default)() });
+                    })
+                };
+                _this2.setState({
+                    apiData: JSON.parse(JSON.stringify(preload)), // deep copy to avoid reference
+                    displayData: JSON.parse(JSON.stringify(preload)), //deep copy
+                    loaded: true
+                });
+            });
+        }
+    }, {
         key: 'sortData',
         value: function sortData(event) {
             var _event$target$selecte = event.target.selectedOptions[0].dataset,
@@ -18879,11 +18906,11 @@ var App = function (_React$Component) {
                 });
                 var newDisplayData = Object.assign({}, { data: resetValues });
                 this.setState({ lastOrder: _constants.KEYS_Ord.asc, lastSort: _constants.KEYS_Sort.default, displayData: newDisplayData });
-                return;
+            } else {
+                var sortedData = this.state.displayData.data.sort((0, _constants.objComparer)(field)(order));
+                var sortedObj = Object.assign({}, { data: sortedData });
+                this.setState({ lastOrder: order, lastSort: field, displayData: sortedObj });
             }
-            var sortedData = this.state.displayData.data.sort((0, _constants.objComparer)(field)(order));
-            var sortedObj = Object.assign({}, { data: sortedData });
-            this.setState({ lastOrder: order, lastSort: field, displayData: sortedObj });
         }
     }, {
         key: 'filterData',
@@ -18908,16 +18935,23 @@ var App = function (_React$Component) {
         value: function render() {
             var _state2 = this.state,
                 apiData = _state2.apiData,
-                displayData = _state2.displayData;
+                displayData = _state2.displayData,
+                loaded = _state2.loaded;
 
+            if (!loaded) {
+                return _react2.default.createElement(
+                    'div',
+                    { className: _app2.default.loading },
+                    ' Loading ... '
+                );
+            }
             return _react2.default.createElement(
                 'div',
                 { className: _app2.default.container },
                 _react2.default.createElement(
                     'div',
                     { className: _app2.default.sidepanel },
-                    _react2.default.createElement(_filter2.default, { onUpdate: this.filterData,
-                        categories: apiData.data.map(function (person) {
+                    _react2.default.createElement(_filter2.default, { onUpdate: this.filterData, categories: apiData.data.map(function (person) {
                             return person.category;
                         }) })
                 ),
@@ -19109,13 +19143,14 @@ exports = module.exports = __webpack_require__(5)(undefined);
 
 
 // module
-exports.push([module.i, ".app__container___1VZ3G {\r\n    width: 960px;\r\n    margin: 0 auto;\r\n}\r\n\r\n.app__sidepanel___1qq_R {\r\n    float: left;\r\n    width: 140px;\r\n}\r\n\r\n.app__center___3zPs3 {\r\n    float: left;\r\n    width: 760px;\r\n}\r\n", ""]);
+exports.push([module.i, ".app__container___1VZ3G {\r\n    width: 960px;\r\n    margin: 0 auto;\r\n}\r\n\r\n.app__sidepanel___1qq_R {\r\n    float: left;\r\n    width: 140px;\r\n}\r\n\r\n.app__center___3zPs3 {\r\n    float: left;\r\n    width: 760px;\r\n}\r\n\r\n.app__loading___10BwD {\r\n    width: 100px;\r\n    margin: 0 auto;\r\n}", ""]);
 
 // exports
 exports.locals = {
 	"container": "app__container___1VZ3G",
 	"sidepanel": "app__sidepanel___1qq_R",
-	"center": "app__center___3zPs3"
+	"center": "app__center___3zPs3",
+	"loading": "app__loading___10BwD"
 };
 
 /***/ }),
@@ -19362,7 +19397,7 @@ var Filter = function Filter(props) {
         _react2.default.createElement(
             'h4',
             null,
-            'Filter'
+            'Category Filter'
         ),
         uniqueCategories.map(function (option) {
             return wrapRadioBtn(option);
@@ -19518,9 +19553,59 @@ exports.locals = {
 
 /***/ }),
 /* 47 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = {"data":[{"name":"Joe","age":24,"priority":1,"category":"cat2"},{"name":"Jane","age":76,"priority":4,"category":"cat1"},{"name":"Kevin","age":32,"priority":2,"category":"cat2"},{"name":"Lucy","age":54,"priority":1,"category":"cat3"},{"name":"Colin","age":34,"priority":3,"category":"cat1"},{"name":"Franny","age":36,"priority":2,"category":"cat3"},{"name":"Neil","age":74,"priority":4,"category":"cat2"},{"name":"Katy","age":55,"priority":3,"category":"cat2"}]}
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+var api = Promise.resolve({
+    "data": [{
+        "name": "Joe",
+        "age": 24,
+        "priority": 1,
+        "category": "cat2"
+    }, {
+        "name": "Jane",
+        "age": 76,
+        "priority": 4,
+        "category": "cat1"
+    }, {
+        "name": "Kevin",
+        "age": 32,
+        "priority": 2,
+        "category": "cat2"
+    }, {
+        "name": "Lucy",
+        "age": 54,
+        "priority": 1,
+        "category": "cat3"
+    }, {
+        "name": "Colin",
+        "age": 34,
+        "priority": 3,
+        "category": "cat1"
+    }, {
+        "name": "Franny",
+        "age": 36,
+        "priority": 2,
+        "category": "cat3"
+    }, {
+        "name": "Neil",
+        "age": 74,
+        "priority": 4,
+        "category": "cat2"
+    }, {
+        "name": "Katy",
+        "age": 55,
+        "priority": 3,
+        "category": "cat2"
+    }]
+});
+
+exports.default = api;
 
 /***/ })
 /******/ ]);

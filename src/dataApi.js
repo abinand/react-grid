@@ -1,4 +1,4 @@
-{
+const api =  Promise.resolve({
     "data": [
         {
             "name": "Joe",
@@ -49,4 +49,6 @@
             "category": "cat2"
         }
     ]
-}
+})
+
+export default api

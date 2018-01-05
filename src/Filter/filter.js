@@ -11,14 +11,12 @@ const Filter = (props) => {
         )
     }
     
-    return <div className={styles.container}>
-        <h4>Filter</h4>
-        {
-            uniqueCategories.map(option => {
-                return wrapRadioBtn(option)
-            })
-        }
-    </div>
+    return (
+        <div className={styles.container}>
+            <h4>Category Filter</h4>
+            { uniqueCategories.map(option => wrapRadioBtn(option)) }
+        </div>
+    )
 }
 
 export default Filter

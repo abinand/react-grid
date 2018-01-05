@@ -1,3 +1,4 @@
+
 /* Enumerations and Utility methods for common functionality and configuration */
 
 export const KEYS_Sort = {
@@ -47,4 +48,9 @@ export const objComparer = key => sortOrder => {
                             ? a[key] < b[key]
                             : a[key] > b[key]
     }
+}
+
+// add delay to Promise
+export const fakeDelay =  milliseconds => param => {
+    return new Promise(resolve => setTimeout(() => resolve(param), milliseconds))
 }

@@ -1,29 +1,42 @@
 import React from 'react'
-import uuidv4 from 'uuid/v4'
+import uuidv4 from 'uuid/v4' // for unique ids
 import styles from './app.css'
 import Person from '../Person/person'
 import Filter from '../Filter/filter'
 import Sort from '../Sort/sort'
-import {KEYS_Ord, KEYS_Sort, objComparer} from '../constants'
-import jsonData from '../dataApi.json' // simulation
-
-const preload = { // assign unique identifiers to the json array 
-    data: jsonData.data.map(personElem => {
-        return Object.assign({}, personElem, { id: `${name}-${uuidv4()}`})
-    })
-}
+import {KEYS_Ord, KEYS_Sort, objComparer, fakeDelay} from '../constants'
+import api from '../dataApi' // json data
 
 class App extends React.Component {
     constructor(args){
         super(args)
         this.state = {
-            apiData: JSON.parse(JSON.stringify(preload)), // deep copy to avoid reference
-            displayData: JSON.parse(JSON.stringify(preload)), //deep copy
+            loaded: false,
+            apiData: {}, 
+            displayData: {},
             lastSort: KEYS_Sort.default,
             lastOrder: KEYS_Ord.asc
         }
         this.filterData = this.filterData.bind(this) 
         this.sortData = this.sortData.bind(this)
+    }
+
+    componentDidMount(){  
+        //simulate api call
+        api
+        .then(fakeDelay(1000))
+        .then(response => {
+            const preload = { // assign unique keys to the json array 
+                data: response.data.map(personElem => {
+                    return Object.assign({}, personElem, { id: `${name}-${uuidv4()}`})
+                })
+            }
+            this.setState({
+                apiData: JSON.parse(JSON.stringify(preload)), // deep copy to avoid reference
+                displayData: JSON.parse(JSON.stringify(preload)), //deep copy
+                loaded: true
+            })
+        })
     }
 
     sortData(event){
@@ -34,11 +47,12 @@ class App extends React.Component {
             const resetValues = this.state.apiData.data.filter(item => idList.includes(item.id))
             const newDisplayData = Object.assign({}, {data: resetValues})
             this.setState({lastOrder: KEYS_Ord.asc, lastSort: KEYS_Sort.default, displayData:newDisplayData})
-            return
         }
-        const sortedData = this.state.displayData.data.sort(objComparer(field)(order))
-        const sortedObj = Object.assign({}, {data: sortedData})
-        this.setState({lastOrder: order, lastSort: field, displayData: sortedObj})
+        else{
+            const sortedData = this.state.displayData.data.sort(objComparer(field)(order))
+            const sortedObj = Object.assign({}, {data: sortedData})
+            this.setState({lastOrder: order, lastSort: field, displayData: sortedObj})
+        }
     }
 
     filterData(event) {
@@ -54,20 +68,20 @@ class App extends React.Component {
     }
 
     render(){
-        const {apiData, displayData} = this.state
+        const {apiData, displayData, loaded} = this.state
+        if(!loaded){
+            return (
+                <div className={styles.loading}> Loading ... </div>
+            )
+        }
         return (
         <div className={styles.container}>
             <div className={styles.sidepanel}>
-                <Filter onUpdate={this.filterData} 
-                        categories={apiData.data.map(person => {
-                                return person.category
-                            })}/>
+                <Filter onUpdate={this.filterData} categories={apiData.data.map(person => person.category)}/>
             </div>
             <div className={styles.center}>
                 <Sort onUpdate={this.sortData}/>
-                {displayData.data.map(person => {
-                    return <Person key={person.id} info={person}/>
-                })}
+                { displayData.data.map(person => <Person key={person.id} info={person}/>) }
             </div>
         </div>
         )

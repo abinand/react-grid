@@ -12,3 +12,8 @@
     float: left;
     width: 760px;
 }
+
+.loading {
+    width: 100px;
+    margin: 0 auto;
+}
