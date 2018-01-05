@@ -8,11 +8,11 @@ const Sort = (props) => {
             <span>Sort By: </span>
             <select onChange={props.onUpdate}>
                 {
-                    REF_sortConfig.map(config => {
-                        return <option key={config.id} data-field={config.field} data-order={config.order} value={config.display}>
-                                    {config.display}
-                                </option>
-                    })
+                    REF_sortConfig.map(config => ( 
+                            <option key={config.id} data-field={config.field} data-order={config.order} value={config.display}>
+                                {config.display}
+                            </option>
+                    ))
                 }
             </select>
         </div>
